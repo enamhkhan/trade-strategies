@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XYZ Trade Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #080d16;
+    font-family: 'DM Sans', sans-serif;
+    padding: 16px;
+    min-height: 100vh;
+  }
+
+  .card {
+    background: #0d1420;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1a2538;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: #0a1628;
+    padding: 20px 18px 18px;
+    border-bottom: 1px solid #1a2538;
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .ticker {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #3b82f6;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .date {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 3px;
+  }
+
+  .badges {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-end;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .badge-green { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-blue  { background: rgba(59,130,246,0.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+
+  /* ── METRIC GRID ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .metric {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .metric-label {
+    font-size: 10px;
+    color: #475569;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    line-height: 1;
+  }
+
+  .green  { color: #10b981; }
+  .red    { color: #ef4444; }
+  .blue   { color: #60a5fa; }
+  .white  { color: #f1f5f9; }
+  .purple { color: #a78bfa; }
+
+  /* ── BODY ── */
+  .body { padding: 16px 18px; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 18px; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #334155;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #1a2538;
+  }
+
+  /* ── TABLE WRAPPER ── */
+  .tbl-wrap {
+    background: #0f1927;
+    border: 1px solid #1a2538;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .tbl-row {
+    display: grid;
+    border-bottom: 1px solid #1a2538;
+    padding: 0;
+  }
+
+  .tbl-row:last-child { border-bottom: none; }
+
+  .tbl-head {
+    display: grid;
+    background: #111c2e;
+    padding: 8px 14px;
+  }
+
+  /* Entry table: 4 cols */
+  .entry-head  { grid-template-columns: 60px 60px 45px 1fr; gap: 8px; }
+  .entry-row   { grid-template-columns: 60px 60px 45px 1fr; gap: 8px; padding: 11px 14px; align-items: center; }
+
+  /* Target table: 4 cols */
+  .target-head { grid-template-columns: 35px 70px 60px 1fr; gap: 8px; }
+  .target-row  { grid-template-columns: 35px 70px 60px 1fr; gap: 8px; padding: 11px 14px; align-items: center; }
+
+  .th {
+    font-size: 9px;
+    font-weight: 600;
+    color: #334155;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .td {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  .td-bold { color: #e2e8f0; }
+
+  .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .dot-green  { background: #10b981; }
+  .dot-blue   { background: #3b82f6; }
+  .dot-purple { background: #8b5cf6; }
+
+  .val {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .size-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #94a3b8;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* ── RULE BOXES ── */
+  .rule-box {
+    background: #0f1927;
+    border: 1px solid #1a2538;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .rule-box-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .rule-item:last-child { margin-bottom: 0; }
+
+  .rule-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .icon-green  { background: rgba(16,185,129,0.15); color: #10b981; }
+  .icon-red    { background: rgba(239,68,68,0.15);  color: #ef4444; }
+  .icon-yellow { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .icon-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+  .rule-text {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  .rule-text strong { color: #94a3b8; font-weight: 500; }
+  .rule-text .danger { color: #ef4444; font-weight: 500; }
+  .rule-text .success { color: #10b981; font-weight: 500; }
+
+  /* ── GOLDEN BAR ── */
+  .golden-bar {
+    background: #0f1927;
+    border: 1px solid #1e2a3a;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 0;
+  }
+
+  .golden-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #f59e0b;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .golden-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .golden-rule {
+    font-size: 11px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .golden-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.1);
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer {
+    text-align: center;
+    font-size: 10px;
+    color: #1e2d3d;
+    padding: 12px 18px;
+    border-top: 1px solid #1a2538;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="ticker">$XYZ · NYSE · WEEKLY</div>
+        <div class="title">Trade Execution<br>Strategy</div>
+        <div class="date">Block, Inc. · June 2, 2026</div>
+      </div>
+      <div class="badges">
+        <span class="badge badge-green">R/R ~4.5:1</span>
+        <span class="badge badge-blue">12–24 months</span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Current price</div>
+        <div class="metric-value white">$74.15</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Buy zone</div>
+        <div class="metric-value green">$69–70</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Stop loss</div>
+        <div class="metric-value red">$55–56</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Final target</div>
+        <div class="metric-value green">$138 ~2x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ENTRY PLAN -->
+    <div class="section">
+      <div class="section-label">Entry Plan</div>
+      <div class="tbl-wrap">
+        <div class="tbl-head entry-head">
+          <span class="th">Entry</span>
+          <span class="th">Zone</span>
+          <span class="th">Size</span>
+          <span class="th">Trigger</span>
+        </div>
+        <div class="tbl-row entry-row">
+          <div class="td td-bold"><span class="dot dot-green"></span>E1</div>
+          <div class="td"><span class="val green">$69–70</span></div>
+          <div class="td"><span class="size-pill">50%</span></div>
+          <div class="td">Pullback + bullish weekly close above $70</div>
+        </div>
+        <div class="tbl-row entry-row">
+          <div class="td td-bold"><span class="dot dot-blue"></span>E2</div>
+          <div class="td"><span class="val blue">$76</span></div>
+          <div class="td"><span class="size-pill">30%</span></div>
+          <div class="td">Weekly close above EMA 200 + high volume</div>
+        </div>
+        <div class="tbl-row entry-row">
+          <div class="td td-bold"><span class="dot dot-purple"></span>E3</div>
+          <div class="td"><span class="val purple">$99</span></div>
+          <div class="td"><span class="size-pill">20%</span></div>
+          <div class="td">Weekly close above swing high + volume spike</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFIT TARGETS -->
+    <div class="section">
+      <div class="section-label">Profit Targets</div>
+      <div class="tbl-wrap">
+        <div class="tbl-head target-head">
+          <span class="th">T</span>
+          <span class="th">Price</span>
+          <span class="th">Action</span>
+          <span class="th">Note</span>
+        </div>
+        <div class="tbl-row target-row">
+          <div class="td td-bold">T1</div>
+          <div class="td"><span class="val green">$82</span></div>
+          <div class="td">Sell 25%</div>
+          <div class="td">Lock first profit</div>
+        </div>
+        <div class="tbl-row target-row">
+          <div class="td td-bold">T2</div>
+          <div class="td"><span class="val green">$99–100</span></div>
+          <div class="td">Sell 25%</div>
+          <div class="td">Move stop → $70, trade is <span style="color:#10b981;">free</span></div>
+        </div>
+        <div class="tbl-row target-row">
+          <div class="td td-bold">T3</div>
+          <div class="td"><span class="val green">$138</span></div>
+          <div class="td">Sell 25%</div>
+          <div class="td">0.382 Fib from ATH</div>
+        </div>
+        <div class="tbl-row target-row">
+          <div class="td td-bold">+</div>
+          <div class="td"><span class="val green">$138+</span></div>
+          <div class="td">Trail</div>
+          <div class="td">Final 25% runs free</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEFENSE RULES -->
+    <div class="section">
+      <div class="section-label">Rules</div>
+      <div class="rule-box">
+        <div class="rule-box-title">Defense — $70 is the line</div>
+        <div class="rule-item">
+          <div class="rule-icon icon-green">✓</div>
+          <div class="rule-text">Weekly close <strong>above $70</strong> → stay in</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Weekly close <span class="danger">below $70</span> → exit immediately</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-yellow">–</div>
+          <div class="rule-text">Intraday dip below $70 → <strong>ignore</strong></div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Close below <span class="danger">$55–56</span> → full exit, thesis broken</div>
+        </div>
+      </div>
+
+      <div class="rule-box">
+        <div class="rule-box-title">Volume — the lie detector</div>
+        <div class="rule-item">
+          <div class="rule-icon icon-green">✓</div>
+          <div class="rule-text">Breakout on <span class="success">high volume</span> → trust it</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Breakout on <span class="danger">low volume</span> → wait for retest</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-blue">i</div>
+          <div class="rule-text">Compare against <strong>20-week avg</strong> volume</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOLDEN RULES -->
+    <div class="golden-bar">
+      <span class="golden-label">⚡ Golden Rules</span>
+      <div class="golden-rules">
+        <div class="golden-rule"><span class="golden-num">1</span>Weekly close is law — not intraday</div>
+        <div class="golden-rule"><span class="golden-num">2</span>Buy breakouts only, never anticipate</div>
+        <div class="golden-rule"><span class="golden-num">3</span>Scale in slowly across 3 entries</div>
+        <div class="golden-rule"><span class="golden-num">4</span>Take partial profits at every target</div>
+        <div class="golden-rule"><span class="golden-num">5</span>After $99 hit — trade becomes risk-free</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="disclaimer">⚠️ Not financial advice. For educational purposes only. Always manage your own risk.</div>
+
+</div>
+</body>
+</html>
