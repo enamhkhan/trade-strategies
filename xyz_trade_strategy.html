@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XYZ Trade Execution Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e17;
+    color: #e2e8f0;
+    font-family: 'DM Sans', sans-serif;
+    padding: 40px;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #0f1520;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #1e2d45;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #0f2447 0%, #0a1628 100%);
+    padding: 32px 36px;
+    border-bottom: 1px solid #1e2d45;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.06);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+
+  .ticker {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #3b82f6;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  .badges {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-green { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); }
+  .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .metric {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: #64748b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 22px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .green { color: #10b981; }
+  .red { color: #ef4444; }
+  .blue { color: #60a5fa; }
+  .white { color: #f1f5f9; }
+
+  .body { padding: 28px 36px; }
+
+  .section { margin-bottom: 24px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e2d45;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: #131c2e;
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #1a2438;
+    color: #94a3b8;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .dot-green { background: #10b981; }
+  .dot-blue { background: #3b82f6; }
+  .dot-purple { background: #8b5cf6; }
+  .dot-gray { background: #64748b; }
+
+  .val {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .size-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    display: inline-block;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .rule-box {
+    background: #111927;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .rule-box-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .rule-item:last-child { margin-bottom: 0; }
+
+  .rule-icon {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .icon-green { background: rgba(16,185,129,0.15); color: #10b981; }
+  .icon-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .icon-yellow { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .icon-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+  .rule-text {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  .rule-text strong { color: #94a3b8; font-weight: 500; }
+
+  .golden-bar {
+    background: linear-gradient(135deg, #131c2e, #0f1a2e);
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .golden-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #f59e0b;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+
+  .golden-rule {
+    font-size: 12px;
+    color: #475569;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #1e2d45;
+    border-radius: 6px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: #334155;
+    padding: 16px 36px;
+    border-top: 1px solid #1a2438;
+  }
+
+  .table-wrapper {
+    background: #111927;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="ticker">$XYZ · NYSE · WEEKLY</div>
+        <div class="title">Trade Execution Strategy</div>
+        <div class="subtitle">Block, Inc. &nbsp;·&nbsp; June 2, 2026</div>
+      </div>
+      <div class="badges">
+        <span class="badge badge-green">R/R ~4.5:1</span>
+        <span class="badge badge-blue">12–24 Month Hold</span>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Current price</div>
+        <div class="metric-value white">$74.15</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Buy zone</div>
+        <div class="metric-value green">$69–70</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Stop loss</div>
+        <div class="metric-value red">$55–56</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Final target</div>
+        <div class="metric-value green">$138 ~2x</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="section">
+      <div class="section-title">Entry Plan — Scale in, never all at once</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Entry</th>
+              <th>Price zone</th>
+              <th>Position size</th>
+              <th>Trigger condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="dot dot-green"></span><span style="color:#e2e8f0;">Entry 1</span></td>
+              <td><span class="val green">$69–70</span></td>
+              <td><span class="size-pill">50%</span></td>
+              <td>Pullback + bullish weekly candle closes above $70</td>
+            </tr>
+            <tr>
+              <td><span class="dot dot-blue"></span><span style="color:#e2e8f0;">Entry 2</span></td>
+              <td><span class="val blue">$76</span></td>
+              <td><span class="size-pill">30%</span></td>
+              <td>Weekly close above EMA 200 on above-avg volume</td>
+            </tr>
+            <tr>
+              <td><span class="dot dot-purple"></span><span style="color:#e2e8f0;">Entry 3</span></td>
+              <td><span class="val" style="color:#a78bfa;">$99</span></td>
+              <td><span class="size-pill">20%</span></td>
+              <td>Weekly close above swing high with volume spike</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Profit Targets — Sell in stages, let winners run</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>Price</th>
+              <th>Action</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:#e2e8f0;">T1</td>
+              <td><span class="val green">$82</span></td>
+              <td>Sell 25%</td>
+              <td>Lock first profit, reduce risk</td>
+            </tr>
+            <tr>
+              <td style="color:#e2e8f0;">T2</td>
+              <td><span class="val green">$99–100</span></td>
+              <td>Sell 25%</td>
+              <td>Move stop to $70 — trade is now <strong style="color:#10b981;">risk free</strong></td>
+            </tr>
+            <tr>
+              <td style="color:#e2e8f0;">T3</td>
+              <td><span class="val green">$138</span></td>
+              <td>Sell 25%</td>
+              <td>0.382 Fibonacci from all-time high</td>
+            </tr>
+            <tr>
+              <td style="color:#e2e8f0;">Remainder</td>
+              <td><span class="val green">$138+</span></td>
+              <td>Trail stop</td>
+              <td>Final 25% runs free with trailing stop</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="rule-box">
+        <div class="rule-box-title">Defense Rules</div>
+        <div class="rule-item">
+          <div class="rule-icon icon-green">✓</div>
+          <div class="rule-text">Weekly close <strong>above $70</strong> → stay in the trade</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Weekly close <strong style="color:#ef4444;">below $70</strong> → exit immediately</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-yellow">–</div>
+          <div class="rule-text">Intraday dip below $70 → <strong>ignore it</strong>, only close matters</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Weekly close below <strong style="color:#ef4444;">$55–56</strong> → full exit, thesis broken</div>
+        </div>
+      </div>
+
+      <div class="rule-box">
+        <div class="rule-box-title">Volume Rules</div>
+        <div class="rule-item">
+          <div class="rule-icon icon-green">✓</div>
+          <div class="rule-text">Breakout on <strong>high volume</strong> → trust it, enter confidently</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-red">✕</div>
+          <div class="rule-text">Breakout on <strong style="color:#ef4444;">low volume</strong> → wait for retest</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-blue">i</div>
+          <div class="rule-text">Compare against the <strong>20-week average</strong> volume</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon icon-blue">i</div>
+          <div class="rule-text">When in doubt → <strong>wait one more weekly close</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="golden-bar">
+      <span class="golden-label">⚡ Golden Rules</span>
+      <span class="golden-rule">1 — Weekly close is law</span>
+      <span class="golden-rule">2 — Buy breakouts, not hopes</span>
+      <span class="golden-rule">3 — Scale in slowly</span>
+      <span class="golden-rule">4 — Take profits at each target</span>
+      <span class="golden-rule">5 — After $99, trade is risk-free</span>
+    </div>
+
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Not financial advice. For educational purposes only. Always do your own research and manage risk accordingly.
+  </div>
+
+</div>
+</body>
+</html>
